@@ -3,26 +3,23 @@
 
   Hey there! Thanks for looking at my source code.
 
-  I'm Jamon Holmgren, author of this tiny website. I'd be honored if you would contribute
-  to this and make it better!
+  I'm Jamon Holmgren. I needed something like this, and so I built it.
+  
+  I'd be honored if you would contribute to this and make it better!
 
   The rules:
   
   1. One file only, no dependencies
   2. The source code has to be readable
 
-  If you like this little experiment, hit me up on Twitter: https://twitter.com/jamonholmgren
+  If you like this little experiment, hit me up on 𝕏: https://x.com/jamonholmgren or email me at hello@jamon.dev.
 
   Happy writing!
-
 -->
 <html lang="en">
   <head>
     <title>textbox.page - Simple text box for writing</title>
-    <meta
-      name="description"
-      content="Simple autosaving text box for writing and editing text. No accounts, no tracking, just a text box."
-    />
+    <meta name="description" content="Simple autosaving text box for writing and editing text. No accounts, no tracking, just a text box." />
     <meta name="viewport" content="width=device-width" />
     <style>
       :root {
@@ -274,219 +271,141 @@
     </style>
   </head>
   <body>
-    <script>
-      // if it's textbox.page, tell them it'll expire soon and to update
-      // their bookmark to textbox.jamon.dev
-      if (window.location.hostname === "textbox.page") {
-        alert(
-          "Hey there! It looks like you're using textbox.page. I'm going to let this domain expire. Please update your bookmark to textbox.jamon.dev. Thanks!"
-        );
-      }
-    </script>
     <main>
-      <label for="t" class="offscreen"
-        >Text area for typing notes and code</label
-      >
+      <label for="t" class="offscreen">Text area for typing notes and code</label>
       <textarea id="t"></textarea>
     </main>
     <div id="byline">
       <div class="settings-container">
-        <div class="settings-group">
-          <label for="theme">Theme:</label>
-          <select id="theme" onchange="updateSetting('theme', this.value)">
-            <option value="dark">Dark</option>
-            <option value="dusk">Dusk</option>
-            <option value="light">Light</option>
-            <option value="sepia">Sepia</option>
-          </select>
-        </div>
+        <select id="theme" onchange="updateSetting('theme', this.value)">
+          <option value="dark">Dark</option>
+          <option value="dusk">Dusk</option>
+          <option value="light">Light</option>
+          <option value="sepia">Sepia</option>
+        </select>
 
-        <div class="settings-group">
-          <label for="font">Font:</label>
-          <select id="font" onchange="updateSetting('font', this.value)">
-            <!-- Font options will be populated dynamically based on mode -->
-          </select>
-        </div>
+        <select id="font" onchange="updateSetting('font', this.value)">
+          <!-- Font options will be populated dynamically based on mode -->
+        </select>
 
-        <div class="settings-group">
-          <label for="fontSize">Size:</label>
-          <input
-            type="range"
-            id="fontSize"
-            min="12"
-            max="24"
-            value="18"
-            onchange="updateSetting('fontSize', this.value)"
-            oninput="updateFontSizePreview(this.value)"
-          />
-          <span id="fontSizeValue">18px</span>
-        </div>
+        <input
+          type="range"
+          id="fontSize"
+          min="12"
+          max="24"
+          value="18"
+          onchange="updateSetting('fontSize', this.value)"
+          oninput="updateFontSizePreview(this.value)"
+        />
+        <span id="fontSizeValue">18px</span>
 
-        <div class="settings-group">
-          <label for="modeSelect">Mode:</label>
-          <select id="modeSelect" onchange="setMode(this.value)">
-            <option value="writing">Writing</option>
-            <option value="code">Code</option>
-          </select>
-        </div>
+        <select id="modeSelect" onchange="setMode(this.value)">
+          <option value="writing">Writing</option>
+          <option value="code">Code</option>
+        </select>
       </div>
 
       <div id="stats">0 lines, 0 words, 0 characters, 0 elapsed seconds</div>
 
       <div>
-        Built by
-        <a href="https://jamonholmgren.com" target="_blank" rel="noopener"
-          >Jamon Holmgren</a
-        >
+        by
+        <a href="https://jamon.dev" target="_blank" rel="noopener">Jamon Holmgren</a>
         <span class="divider">&bull;</span>
-        <a
-          href="https://github.com/jamonholmgren/jamon.dev/blob/main/web/static/notes.html"
-          target="_blank"
-          rel="noopener"
-          >GitHub Source</a
-        >
+        <a href="https://github.com/jamonholmgren/textbox.jamon.dev" target="_blank" rel="noopener">GitHub Source</a>
         <span class="divider">&bull;</span>
-        <a href="https://infinite.red" target="_blank" rel="noopener"
-          >Infinite Red</a
-        >
+        <a href="./classic.html" target="_blank" rel="noopener">Classic</a>
+        <span class="divider">&bull;</span>
+        <a href="https://js.jamon.dev" target="_blank" rel="noopener">Simple JS Playground</a>
       </div>
     </div>
 
     <script>
-      var TAB_TEXT = "\t";
-      var mode = "writing";
+      var TAB_TEXT = "\t"
+      var mode = "writing"
       var DEFAULT_TEXT =
-        "Hey there! This is a simple textbox that you can paste, write, edit, and copy from. We'll remember what you wrote, even if you close the tab and come back. But don't worry -- we only store the information locally in your browser, not any servers or databases. We don't even have Google Analytics installed. Try the 'Code Mode' in the settings!";
-      var t = document.getElementById("t");
+        "Hey there! This is a simple textbox where you can take notes, write, paste, edit, and copy from. It will remember what you wrote, even if you close the tab and come back.\n\nBut don't worry -- this site only stores the information locally in your browser, not any servers or databases. I don't even have analytics, so I have no idea how many people use this (send me an email if you want!).\n\nTry changing the settings below...my favorite is Sepia color with Bookman font!"
+      var t = document.getElementById("t")
 
       function setMode(newMode) {
-        const previousMode = mode;
-        mode = newMode;
+        const previousMode = mode
+        mode = newMode
 
         // Save current font before switching modes
         if (previousMode !== mode) {
-          const currentFont = getCurrentFont();
-          saveModeFont(previousMode, currentFont);
+          const currentFont = getCurrentFont()
+          saveModeFont(previousMode, currentFont)
         }
 
         if (mode === "code") {
-          t.classList.add("codemode");
+          t.classList.add("codemode")
           // If current font is not a monospace font, set it to the saved monospace font or default
           if (!isMonospaceFont(getCurrentFont())) {
-            const savedCodeFont = getModeFont("code");
-            updateSetting("font", savedCodeFont || "mono", false);
+            const savedCodeFont = getModeFont("code")
+            updateSetting("font", savedCodeFont || "mono", false)
           }
         } else {
-          t.classList.remove("codemode");
+          t.classList.remove("codemode")
         }
 
         // Update the select element
-        document.getElementById("modeSelect").value = mode;
+        document.getElementById("modeSelect").value = mode
 
         // Update font options based on mode
-        updateFontOptions();
+        updateFontOptions()
 
         // Restore the font for this mode
-        const savedFont = getModeFont(mode);
+        const savedFont = getModeFont(mode)
         if (savedFont) {
-          updateSetting("font", savedFont, false); // Don't save to general settings
+          updateSetting("font", savedFont, false) // Don't save to general settings
 
           // Make sure the font dropdown reflects the current font
-          const fontSelect = document.getElementById("font");
-          if (fontSelect) fontSelect.value = savedFont;
+          const fontSelect = document.getElementById("font")
+          if (fontSelect) fontSelect.value = savedFont
         }
 
         // Save the mode
-        localStorage.setItem("mode", mode);
+        localStorage.setItem("mode", mode)
       }
 
       function saveModeFont(mode, font) {
-        const modeFonts = JSON.parse(localStorage.getItem("modeFonts") || "{}");
-        modeFonts[mode] = font;
-        localStorage.setItem("modeFonts", JSON.stringify(modeFonts));
+        const modeFonts = JSON.parse(localStorage.getItem("modeFonts") || "{}")
+        modeFonts[mode] = font
+        localStorage.setItem("modeFonts", JSON.stringify(modeFonts))
       }
 
       function getModeFont(mode) {
-        const modeFonts = JSON.parse(localStorage.getItem("modeFonts") || "{}");
-        return modeFonts[mode];
+        const modeFonts = JSON.parse(localStorage.getItem("modeFonts") || "{}")
+        return modeFonts[mode]
       }
 
       function getCurrentFont() {
-        const fontClass = t.className.match(/font-(\w+)/);
-        return fontClass ? fontClass[1] : "sans";
+        const fontClass = t.className.match(/font-(\w+)/)
+        return fontClass ? fontClass[1] : "Bookman"
       }
 
       function isMonospaceFont(font) {
-        return ["mono", "courier", "consolas"].includes(font);
+        return ["mono", "courier", "consolas"].includes(font)
       }
 
       function updateFontOptions() {
-        const fontSelect = document.getElementById("font");
-        const currentFont = getCurrentFont();
+        const fontSelect = document.getElementById("font")
+        const currentFont = getCurrentFont()
 
         // Clear existing options
-        fontSelect.innerHTML = "";
+        fontSelect.innerHTML = ""
 
         // Add all font options regardless of mode
         // Sans-serif fonts
-        addFontOption(
-          fontSelect,
-          "sans",
-          "Sans-serif",
-          currentFont === "sans",
-          mode === "code" && !isMonospaceFont("sans")
-        );
-        addFontOption(
-          fontSelect,
-          "verdana",
-          "Verdana",
-          currentFont === "verdana",
-          mode === "code" && !isMonospaceFont("verdana")
-        );
-        addFontOption(
-          fontSelect,
-          "tahoma",
-          "Tahoma",
-          currentFont === "tahoma",
-          mode === "code" && !isMonospaceFont("tahoma")
-        );
-        addFontOption(
-          fontSelect,
-          "trebuchet",
-          "Trebuchet MS",
-          currentFont === "trebuchet",
-          mode === "code" && !isMonospaceFont("trebuchet")
-        );
+        addFontOption(fontSelect, "sans", "Sans-serif", currentFont === "sans", mode === "code" && !isMonospaceFont("sans"))
+        addFontOption(fontSelect, "verdana", "Verdana", currentFont === "verdana", mode === "code" && !isMonospaceFont("verdana"))
+        addFontOption(fontSelect, "tahoma", "Tahoma", currentFont === "tahoma", mode === "code" && !isMonospaceFont("tahoma"))
+        addFontOption(fontSelect, "trebuchet", "Trebuchet MS", currentFont === "trebuchet", mode === "code" && !isMonospaceFont("trebuchet"))
 
         // Serif fonts
-        addFontOption(
-          fontSelect,
-          "serif",
-          "Georgia",
-          currentFont === "serif",
-          mode === "code" && !isMonospaceFont("serif")
-        );
-        addFontOption(
-          fontSelect,
-          "garamond",
-          "Garamond",
-          currentFont === "garamond",
-          mode === "code" && !isMonospaceFont("garamond")
-        );
-        addFontOption(
-          fontSelect,
-          "palatino",
-          "Palatino",
-          currentFont === "palatino",
-          mode === "code" && !isMonospaceFont("palatino")
-        );
-        addFontOption(
-          fontSelect,
-          "bookman",
-          "Bookman",
-          currentFont === "bookman",
-          mode === "code" && !isMonospaceFont("bookman")
-        );
+        addFontOption(fontSelect, "serif", "Georgia", currentFont === "serif", mode === "code" && !isMonospaceFont("serif"))
+        addFontOption(fontSelect, "garamond", "Garamond", currentFont === "garamond", mode === "code" && !isMonospaceFont("garamond"))
+        addFontOption(fontSelect, "palatino", "Palatino", currentFont === "palatino", mode === "code" && !isMonospaceFont("palatino"))
+        addFontOption(fontSelect, "bookman", "Bookman", currentFont === "bookman", mode === "code" && !isMonospaceFont("bookman"))
 
         // Monospace fonts
         addFontOption(
@@ -495,103 +414,81 @@
           "Monospace",
           currentFont === "mono",
           false // Never disable monospace fonts
-        );
+        )
         addFontOption(
           fontSelect,
           "courier",
           "Courier New",
           currentFont === "courier",
           false // Never disable monospace fonts
-        );
+        )
         addFontOption(
           fontSelect,
           "consolas",
           "Consolas",
           currentFont === "consolas",
           false // Never disable monospace fonts
-        );
+        )
 
         // After adding all options, make sure the correct one is selected
-        if (fontSelect.value !== currentFont) {
-          fontSelect.value = currentFont;
-        }
+        if (fontSelect.value !== currentFont) fontSelect.value = currentFont
       }
 
-      function addFontOption(
-        selectElement,
-        value,
-        text,
-        isSelected,
-        isDisabled
-      ) {
-        const option = document.createElement("option");
-        option.value = value;
-        option.text = text;
-        option.selected = isSelected;
+      function addFontOption(selectElement, value, text, isSelected, isDisabled) {
+        const option = document.createElement("option")
+        option.value = value
+        option.text = text
+        option.selected = isSelected
         if (isDisabled) {
-          option.disabled = true;
-          option.style.color = "#888";
+          option.disabled = true
+          option.style.color = "#888"
         }
-        selectElement.add(option);
+        selectElement.add(option)
       }
 
-      var startTime = new Date().getTime();
-      var stats = document.getElementById("stats");
+      var startTime = new Date().getTime()
+      var stats = document.getElementById("stats")
       function updateStats() {
-        var lines = t.value.split("\n").length;
+        var lines = t.value.split("\n").length
         var words = t.value.split(/\s+/).filter(function (word) {
-          return word.length > 0;
-        }).length;
-        var chars = t.value.length;
-        var seconds = Math.floor((new Date().getTime() - startTime) / 1000);
-        var secondsMinutes =
-          seconds < 59
-            ? seconds + " elapsed seconds"
-            : Math.floor(seconds / 60) + " elapsed minutes";
-        stats.innerText =
-          lines +
-          " lines, " +
-          words +
-          " words, " +
-          chars +
-          " characters, " +
-          secondsMinutes;
+          return word.length > 0
+        }).length
+        var chars = t.value.length
+        var seconds = Math.floor((new Date().getTime() - startTime) / 1000)
+        var secondsMinutes = seconds < 59 ? seconds + " elapsed seconds" : Math.floor(seconds / 60) + " elapsed minutes"
+        stats.innerText = lines + " lines, " + words + " words, " + chars + " characters, " + secondsMinutes
       }
-      setInterval(updateStats, 1000);
+      setInterval(updateStats, 1000)
 
       function ready(fn) {
-        (
-          document.attachEvent
-            ? document.readyState === "complete"
-            : document.readyState !== "loading"
-        )
+        ;(document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading")
           ? fn()
-          : document.addEventListener("DOMContentLoaded", fn);
+          : document.addEventListener("DOMContentLoaded", fn)
       }
 
       ready(function () {
-        mode = localStorage.getItem("mode") || "writing";
-        setMode(mode);
+        mode = localStorage.getItem("mode") || "writing"
+        setMode(mode)
 
-        t.value = localStorage.getItem("text") || DEFAULT_TEXT;
-        loadSettings();
+        t.value = localStorage.getItem("text") || DEFAULT_TEXT
+        loadSettings()
 
         // Make sure font options are updated based on mode
-        updateFontOptions();
+        updateFontOptions()
 
         t.addEventListener("input", function (ev) {
-          localStorage.setItem("text", t.value);
-          updateStats();
-        });
-        t.select();
-        t.focus();
-      });
+          localStorage.setItem("text", t.value)
+          updateStats()
+        })
+        t.select()
+        t.focus()
+      })
 
       // loading this tab key handler async for performance reasons
       // adapted from https://stackoverflow.com/a/45396754/204044
       var loadAsync = function () {
         function tabHandler(e) {
-          if (mode !== "code") return;
+          if (mode !== "code") return
           if (e.keyCode === 13) {
             // prettier-ignore
             if (this.selectionStart === this.selectionEnd) {
@@ -606,7 +503,7 @@
               }
             }
           } else if (e.keyCode === 9) {
-            e.preventDefault();
+            e.preventDefault()
             // prettier-ignore
             if (this.selectionStart === this.selectionEnd) {
               if (!e.shiftKey) {
@@ -634,96 +531,87 @@
             }
           }
         }
-        t.addEventListener("keydown", tabHandler, false);
-      };
-      setTimeout(loadAsync, 1000);
+        t.addEventListener("keydown", tabHandler, false)
+      }
+      setTimeout(loadAsync, 1000)
 
       function updateFontSizePreview(value) {
         // Update the display value
-        document.getElementById("fontSizeValue").textContent = `${value}px`;
+        document.getElementById("fontSizeValue").textContent = `${value}px`
 
         // Update the font size in real-time
-        t.style.fontSize = `${value}px`;
+        t.style.fontSize = `${value}px`
       }
 
       function updateSetting(setting, value, saveToSettings = true) {
         switch (setting) {
           case "theme":
-            document.documentElement.setAttribute("data-theme", value);
-            break;
+            document.documentElement.setAttribute("data-theme", value)
+            break
           case "font":
             // Remove any existing font classes
-            t.className = t.className.replace(/font-\w+/g, "").trim();
+            t.className = t.className.replace(/font-\w+/g, "").trim()
 
             // Add the new font class
-            t.classList.add(`font-${value}`);
+            t.classList.add(`font-${value}`)
 
             // Keep codemode class if in code mode
-            if (mode === "code") {
-              t.classList.add("codemode");
-            }
+            if (mode === "code") t.classList.add("codemode")
 
             // Save font preference for current mode
-            if (saveToSettings) {
-              saveModeFont(mode, value);
-            }
-            break;
+            if (saveToSettings) saveModeFont(mode, value)
+            break
           case "fontSize":
             // Font size is already updated in real-time by updateFontSizePreview
             // This just saves the setting
-            break;
+            break
         }
 
         // Save settings
         if (saveToSettings) {
-          const settings = JSON.parse(localStorage.getItem("settings") || "{}");
-          settings[setting] = value;
-          localStorage.setItem("settings", JSON.stringify(settings));
+          const settings = JSON.parse(localStorage.getItem("settings") || "{}")
+          settings[setting] = value
+          localStorage.setItem("settings", JSON.stringify(settings))
         }
       }
 
       // Load settings
       function loadSettings() {
-        const settings = JSON.parse(localStorage.getItem("settings") || "{}");
+        const settings = JSON.parse(localStorage.getItem("settings") || "{}")
 
         if (settings.theme) {
-          document.getElementById("theme").value = settings.theme;
-          document.documentElement.setAttribute("data-theme", settings.theme);
+          document.getElementById("theme").value = settings.theme
+          document.documentElement.setAttribute("data-theme", settings.theme)
         }
 
         // Get mode-specific font if available
-        const modeFont = getModeFont(mode);
-        const fontToUse =
-          modeFont || settings.font || (mode === "code" ? "mono" : "sans");
+        const modeFont = getModeFont(mode)
+        const fontToUse = modeFont || settings.font || (mode === "code" ? "mono" : "sans")
 
         // Clear existing font classes first
-        t.className = t.className.replace(/font-\w+/g, "").trim();
-        t.classList.add(`font-${fontToUse}`);
+        t.className = t.className.replace(/font-\w+/g, "").trim()
+        t.classList.add(`font-${fontToUse}`)
 
         // Update font options first, then set the selected value
-        updateFontOptions();
+        updateFontOptions()
 
         // Now set the font dropdown value directly
-        const fontSelect = document.getElementById("font");
+        const fontSelect = document.getElementById("font")
         if (fontSelect) {
           setTimeout(() => {
-            fontSelect.value = fontToUse;
-          }, 0);
+            fontSelect.value = fontToUse
+          }, 0)
         }
 
         if (settings.fontSize) {
-          const fontSize = settings.fontSize;
-          document.getElementById("fontSize").value = fontSize;
-          document.getElementById(
-            "fontSizeValue"
-          ).textContent = `${fontSize}px`;
-          t.style.fontSize = `${fontSize}px`;
+          const fontSize = settings.fontSize
+          document.getElementById("fontSize").value = fontSize
+          document.getElementById("fontSizeValue").textContent = `${fontSize}px`
+          t.style.fontSize = `${fontSize}px`
         }
 
         // Make sure code mode class is applied if needed
-        if (mode === "code") {
-          t.classList.add("codemode");
-        }
+        if (mode === "code") t.classList.add("codemode")
       }
     </script>
   </body>
