@@ -20,7 +20,8 @@
   <head>
     <title>textbox.page - Simple text box for writing</title>
     <meta name="description" content="Simple autosaving text box for writing and editing text. No accounts, no tracking, just a text box." />
-    <meta name="viewport" content="width=device-width" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="UTF-8" />
     <style>
       :root {
         /* Dark theme (default) */
@@ -28,6 +29,9 @@
         --textarea-bg: #212121;
         --text-color: #b9b9b9;
         --settings-bg: #333333;
+        --border-color: #000000;
+        --font-size: 18px;
+        --transition-speed: 0.3s;
       }
 
       [data-theme="light"] {
@@ -35,6 +39,7 @@
         --textarea-bg: #f5f5f5;
         --text-color: #333333;
         --settings-bg: #e0e0e0;
+        --border-color: #cccccc;
       }
 
       [data-theme="sepia"] {
@@ -42,6 +47,7 @@
         --textarea-bg: #fbf7ef;
         --text-color: #5f4b32;
         --settings-bg: #ede6d4;
+        --border-color: #d3c6a6;
       }
 
       [data-theme="dusk"] {
@@ -49,6 +55,8 @@
         --textarea-bg: #3a2042;
         --text-color: #e6ddf9;
         --settings-bg: #582b5e;
+        --border-color: #582b5e;
+        --accent-color: #f9c846;
       }
 
       html,
@@ -57,10 +65,11 @@
         height: 100%;
         padding: 0;
         margin: 0;
-        font-family: monospace;
-        transition: background 0.3s ease;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        transition: background var(--transition-speed) ease;
         display: flex;
         flex-direction: column;
+        color: var(--text-color);
       }
 
       [data-theme="dusk"] body {
@@ -71,24 +80,22 @@
         background: linear-gradient(to bottom, #3a2042 0%, #2d1b2e 100%);
         border: 1px solid #582b5e;
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-        color: #e6ddf9;
       }
 
       [data-theme="dusk"] .settings-group select,
       [data-theme="dusk"] .settings-group input {
         background: rgba(58, 32, 66, 0.8);
         border: 1px solid #582b5e;
-        color: #e6ddf9;
       }
 
       [data-theme="dusk"] #byline a,
       [data-theme="dusk"] #byline a:visited {
-        color: #f9c846;
-        border-bottom: 1px dotted #f9c846;
+        color: var(--accent-color, #f9c846);
+        border-bottom: 1px dotted var(--accent-color, #f9c846);
       }
 
       [data-theme="dusk"] #byline a:hover {
-        border-bottom: 1px solid #f9c846;
+        border-bottom: 1px solid var(--accent-color, #f9c846);
       }
 
       main {
@@ -109,13 +116,19 @@
         min-height: 0; /* Important for flex child to shrink properly */
         margin: 0 auto;
         background: var(--textarea-bg);
-        font-size: 18px;
+        font-size: var(--font-size);
         color: var(--text-color);
-        border: 1px solid #000000;
-        font-family: Helvetica, sans-serif;
+        border: 1px solid var(--border-color);
+        font-family: Helvetica, Arial, sans-serif;
         tab-size: 2;
-        transition: color 0.3s ease, background-color 0.3s ease; /* Only transition colors, not size */
+        transition: color var(--transition-speed) ease, background-color var(--transition-speed) ease;
         resize: none; /* Disable resize since we're using flexbox */
+        border-radius: 4px;
+        outline: none;
+      }
+
+      #t:focus {
+        box-shadow: 0 0 0 2px rgba(128, 128, 128, 0.2);
       }
 
       #t.codemode {
@@ -123,7 +136,7 @@
       }
 
       #t.font-mono {
-        font-family: monospace;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
       }
 
       #t.font-courier {
@@ -182,6 +195,7 @@
         color: var(--text-color);
         text-decoration: none;
         border-bottom: 1px dotted var(--text-color);
+        transition: border-bottom var(--transition-speed) ease;
       }
 
       #byline a:hover {
@@ -210,16 +224,25 @@
 
       .settings-group select,
       .settings-group input {
-        padding: 2px 4px;
+        padding: 4px 8px;
         background: var(--textarea-bg);
         color: var(--text-color);
         border: 1px solid var(--text-color);
-        border-radius: 3px;
+        border-radius: 4px;
+        font-size: 14px;
+        transition: border-color var(--transition-speed) ease, box-shadow var(--transition-speed) ease;
+      }
+
+      .settings-group select:focus,
+      .settings-group input:focus {
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(128, 128, 128, 0.2);
       }
 
       .settings-group input[type="range"] {
-        width: 60px;
+        width: 80px;
         margin: 0;
+        accent-color: var(--text-color);
       }
 
       #stats {
@@ -273,33 +296,27 @@
   <body>
     <main>
       <label for="t" class="offscreen">Text area for typing notes and code</label>
-      <textarea id="t"></textarea>
+      <textarea id="t" spellcheck="true" autocomplete="off"></textarea>
     </main>
     <div id="byline">
       <div class="settings-container">
-        <select id="theme" onchange="updateSetting('theme', this.value)">
+        <select id="theme" aria-label="Theme selection">
           <option value="dark">Dark</option>
           <option value="dusk">Dusk</option>
           <option value="light">Light</option>
           <option value="sepia">Sepia</option>
         </select>
 
-        <select id="font" onchange="updateSetting('font', this.value)">
+        <select id="font" aria-label="Font selection">
           <!-- Font options will be populated dynamically based on mode -->
         </select>
 
-        <input
-          type="range"
-          id="fontSize"
-          min="12"
-          max="24"
-          value="18"
-          onchange="updateSetting('fontSize', this.value)"
-          oninput="updateFontSizePreview(this.value)"
-        />
-        <span id="fontSizeValue">18px</span>
+        <div class="settings-group">
+          <input type="range" id="fontSize" min="12" max="24" value="18" aria-label="Font size" />
+          <span id="fontSizeValue">18px</span>
+        </div>
 
-        <select id="modeSelect" onchange="setMode(this.value)">
+        <select id="modeSelect" aria-label="Mode selection">
           <option value="writing">Writing</option>
           <option value="code">Code</option>
         </select>
@@ -320,51 +337,32 @@
     </div>
 
     <script>
-      var TAB_TEXT = "\t"
-      var mode = "writing"
-      var DEFAULT_TEXT =
+      // Constants
+      const TAB_TEXT = "\t"
+      const DEFAULT_TEXT =
         "Hey there! This is a simple textbox where you can take notes, write, paste, edit, and copy from. It will remember what you wrote, even if you close the tab and come back.\n\nBut don't worry -- this site only stores the information locally in your browser, not any servers or databases. I don't even have analytics, so I have no idea how many people use this (send me an email if you want!).\n\nTry changing the settings below...my favorite is Sepia color with Bookman font!"
-      var t = document.getElementById("t")
 
-      function setMode(newMode) {
-        const previousMode = mode
-        mode = newMode
+      // DOM elements
+      const textarea = document.getElementById("t")
+      const stats = document.getElementById("stats")
+      const themeSelect = document.getElementById("theme")
+      const fontSelect = document.getElementById("font")
+      const fontSizeInput = document.getElementById("fontSize")
+      const fontSizeValue = document.getElementById("fontSizeValue")
+      const modeSelect = document.getElementById("modeSelect")
 
-        // Save current font before switching modes
-        if (previousMode !== mode) {
-          const currentFont = getCurrentFont()
-          saveModeFont(previousMode, currentFont)
-        }
+      // App state
+      let mode = "writing"
+      const startTime = new Date().getTime()
 
-        if (mode === "code") {
-          t.classList.add("codemode")
-          // If current font is not a monospace font, set it to the saved monospace font or default
-          if (!isMonospaceFont(getCurrentFont())) {
-            const savedCodeFont = getModeFont("code")
-            updateSetting("font", savedCodeFont || "mono", false)
-          }
-        } else {
-          t.classList.remove("codemode")
-        }
+      // Font management functions
+      function getCurrentFont() {
+        const fontClass = textarea.className.match(/font-(\w+)/)
+        return fontClass ? fontClass[1] : "bookman"
+      }
 
-        // Update the select element
-        document.getElementById("modeSelect").value = mode
-
-        // Update font options based on mode
-        updateFontOptions()
-
-        // Restore the font for this mode
-        const savedFont = getModeFont(mode)
-        if (savedFont) {
-          updateSetting("font", savedFont, false) // Don't save to general settings
-
-          // Make sure the font dropdown reflects the current font
-          const fontSelect = document.getElementById("font")
-          if (fontSelect) fontSelect.value = savedFont
-        }
-
-        // Save the mode
-        localStorage.setItem("mode", mode)
+      function isMonospaceFont(font) {
+        return ["mono", "courier", "consolas"].includes(font)
       }
 
       function saveModeFont(mode, font) {
@@ -378,17 +376,41 @@
         return modeFonts[mode]
       }
 
-      function getCurrentFont() {
-        const fontClass = t.className.match(/font-(\w+)/)
-        return fontClass ? fontClass[1] : "Bookman"
+      // UI update functions
+      function updateFontSizePreview(value) {
+        // Update the display value
+        fontSizeValue.textContent = `${value}px`
+
+        // Update the font size in real-time
+        textarea.style.fontSize = `${value}px`
+
+        // Update CSS variable for consistency
+        document.documentElement.style.setProperty("--font-size", `${value}px`)
       }
 
-      function isMonospaceFont(font) {
-        return ["mono", "courier", "consolas"].includes(font)
+      function updateStats() {
+        const lines = textarea.value.split("\n").length
+        const words = textarea.value.split(/\s+/).filter((word) => word.length > 0).length
+        const chars = textarea.value.length
+        const seconds = Math.floor((new Date().getTime() - startTime) / 1000)
+        const timeDisplay = seconds < 59 ? `${seconds} elapsed seconds` : `${Math.floor(seconds / 60)} elapsed minutes`
+
+        stats.textContent = `${lines} lines, ${words} words, ${chars} characters, ${timeDisplay}`
+      }
+
+      function addFontOption(value, text, isSelected, isDisabled) {
+        const option = document.createElement("option")
+        option.value = value
+        option.text = text
+        option.selected = isSelected
+        if (isDisabled) {
+          option.disabled = true
+          option.style.color = "#888"
+        }
+        fontSelect.add(option)
       }
 
       function updateFontOptions() {
-        const fontSelect = document.getElementById("font")
         const currentFont = getCurrentFont()
 
         // Clear existing options
@@ -396,34 +418,31 @@
 
         // Add all font options regardless of mode
         // Sans-serif fonts
-        addFontOption(fontSelect, "sans", "Sans-serif", currentFont === "sans", mode === "code" && !isMonospaceFont("sans"))
-        addFontOption(fontSelect, "verdana", "Verdana", currentFont === "verdana", mode === "code" && !isMonospaceFont("verdana"))
-        addFontOption(fontSelect, "tahoma", "Tahoma", currentFont === "tahoma", mode === "code" && !isMonospaceFont("tahoma"))
-        addFontOption(fontSelect, "trebuchet", "Trebuchet MS", currentFont === "trebuchet", mode === "code" && !isMonospaceFont("trebuchet"))
+        addFontOption("sans", "Sans-serif", currentFont === "sans", mode === "code" && !isMonospaceFont("sans"))
+        addFontOption("verdana", "Verdana", currentFont === "verdana", mode === "code" && !isMonospaceFont("verdana"))
+        addFontOption("tahoma", "Tahoma", currentFont === "tahoma", mode === "code" && !isMonospaceFont("tahoma"))
+        addFontOption("trebuchet", "Trebuchet MS", currentFont === "trebuchet", mode === "code" && !isMonospaceFont("trebuchet"))
 
         // Serif fonts
-        addFontOption(fontSelect, "serif", "Georgia", currentFont === "serif", mode === "code" && !isMonospaceFont("serif"))
-        addFontOption(fontSelect, "garamond", "Garamond", currentFont === "garamond", mode === "code" && !isMonospaceFont("garamond"))
-        addFontOption(fontSelect, "palatino", "Palatino", currentFont === "palatino", mode === "code" && !isMonospaceFont("palatino"))
-        addFontOption(fontSelect, "bookman", "Bookman", currentFont === "bookman", mode === "code" && !isMonospaceFont("bookman"))
+        addFontOption("serif", "Georgia", currentFont === "serif", mode === "code" && !isMonospaceFont("serif"))
+        addFontOption("garamond", "Garamond", currentFont === "garamond", mode === "code" && !isMonospaceFont("garamond"))
+        addFontOption("palatino", "Palatino", currentFont === "palatino", mode === "code" && !isMonospaceFont("palatino"))
+        addFontOption("bookman", "Bookman", currentFont === "bookman", mode === "code" && !isMonospaceFont("bookman"))
 
         // Monospace fonts
         addFontOption(
-          fontSelect,
           "mono",
           "Monospace",
           currentFont === "mono",
           false // Never disable monospace fonts
         )
         addFontOption(
-          fontSelect,
           "courier",
           "Courier New",
           currentFont === "courier",
           false // Never disable monospace fonts
         )
         addFontOption(
-          fontSelect,
           "consolas",
           "Consolas",
           currentFont === "consolas",
@@ -434,115 +453,7 @@
         if (fontSelect.value !== currentFont) fontSelect.value = currentFont
       }
 
-      function addFontOption(selectElement, value, text, isSelected, isDisabled) {
-        const option = document.createElement("option")
-        option.value = value
-        option.text = text
-        option.selected = isSelected
-        if (isDisabled) {
-          option.disabled = true
-          option.style.color = "#888"
-        }
-        selectElement.add(option)
-      }
-
-      var startTime = new Date().getTime()
-      var stats = document.getElementById("stats")
-      function updateStats() {
-        var lines = t.value.split("\n").length
-        var words = t.value.split(/\s+/).filter(function (word) {
-          return word.length > 0
-        }).length
-        var chars = t.value.length
-        var seconds = Math.floor((new Date().getTime() - startTime) / 1000)
-        var secondsMinutes = seconds < 59 ? seconds + " elapsed seconds" : Math.floor(seconds / 60) + " elapsed minutes"
-        stats.innerText = lines + " lines, " + words + " words, " + chars + " characters, " + secondsMinutes
-      }
-      setInterval(updateStats, 1000)
-
-      function ready(fn) {
-        ;(document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading")
-          ? fn()
-          : document.addEventListener("DOMContentLoaded", fn)
-      }
-
-      ready(function () {
-        mode = localStorage.getItem("mode") || "writing"
-        setMode(mode)
-
-        t.value = localStorage.getItem("text") || DEFAULT_TEXT
-        loadSettings()
-
-        // Make sure font options are updated based on mode
-        updateFontOptions()
-
-        t.addEventListener("input", function (ev) {
-          localStorage.setItem("text", t.value)
-          updateStats()
-        })
-        t.select()
-        t.focus()
-      })
-
-      // loading this tab key handler async for performance reasons
-      // adapted from https://stackoverflow.com/a/45396754/204044
-      var loadAsync = function () {
-        function tabHandler(e) {
-          if (mode !== "code") return
-          if (e.keyCode === 13) {
-            // prettier-ignore
-            if (this.selectionStart === this.selectionEnd) {
-              var sel = this.selectionStart;
-              var text = this.value;
-              while (sel > 0 && text[sel - 1] != "\n") sel--;
-              var lineStart = sel;
-              while (text[sel] == " " || text[sel] == "\t") sel++;
-              if (sel > lineStart) {
-                document.execCommand("insertText", false, "\n" + text.substr(lineStart, sel - lineStart));
-                this.blur(); this.focus(); e.preventDefault(); return false;
-              }
-            }
-          } else if (e.keyCode === 9) {
-            e.preventDefault()
-            // prettier-ignore
-            if (this.selectionStart === this.selectionEnd) {
-              if (!e.shiftKey) {
-                document.execCommand("insertText", false, "\t");
-              } else {
-                if (this.selectionStart > 0 && this.value[this.selectionStart - 1] == "\t") document.execCommand("delete");
-              }
-            } else {
-              var selStart = this.selectionStart;
-              var selEnd = this.selectionEnd;
-              while (selStart > 0 && this.value[selStart - 1] != "\n") selStart--;
-              while (selEnd > 0 && this.value[selEnd - 1] != "\n" && selEnd < this.value.length) selEnd++;
-              var lines = this.value.substr(selStart, selEnd - selStart).split("\n");
-              for (var i = 0; i < lines.length; i++) {
-                if (i == lines.length - 1 && lines[i].length == 0) continue;
-                if (e.shiftKey) {
-                  if (lines[i].startsWith("\t")) lines[i] = lines[i].substr(1);
-                  else if (lines[i].startsWith("    ")) lines[i] = lines[i].substr(4);
-                } else lines[i] = "\t" + lines[i];
-              }
-              lines = lines.join("\n");
-              this.value = this.value.substr(0, selStart) + lines + this.value.substr(selEnd);
-              this.selectionStart = selStart;
-              this.selectionEnd = selStart + lines.length;
-            }
-          }
-        }
-        t.addEventListener("keydown", tabHandler, false)
-      }
-      setTimeout(loadAsync, 1000)
-
-      function updateFontSizePreview(value) {
-        // Update the display value
-        document.getElementById("fontSizeValue").textContent = `${value}px`
-
-        // Update the font size in real-time
-        t.style.fontSize = `${value}px`
-      }
-
+      // Settings management
       function updateSetting(setting, value, saveToSettings = true) {
         switch (setting) {
           case "theme":
@@ -550,20 +461,19 @@
             break
           case "font":
             // Remove any existing font classes
-            t.className = t.className.replace(/font-\w+/g, "").trim()
+            textarea.className = textarea.className.replace(/font-\w+/g, "").trim()
 
             // Add the new font class
-            t.classList.add(`font-${value}`)
+            textarea.classList.add(`font-${value}`)
 
             // Keep codemode class if in code mode
-            if (mode === "code") t.classList.add("codemode")
+            if (mode === "code") textarea.classList.add("codemode")
 
             // Save font preference for current mode
             if (saveToSettings) saveModeFont(mode, value)
             break
           case "fontSize":
             // Font size is already updated in real-time by updateFontSizePreview
-            // This just saves the setting
             break
         }
 
@@ -575,12 +485,11 @@
         }
       }
 
-      // Load settings
       function loadSettings() {
         const settings = JSON.parse(localStorage.getItem("settings") || "{}")
 
         if (settings.theme) {
-          document.getElementById("theme").value = settings.theme
+          themeSelect.value = settings.theme
           document.documentElement.setAttribute("data-theme", settings.theme)
         }
 
@@ -589,14 +498,13 @@
         const fontToUse = modeFont || settings.font || (mode === "code" ? "mono" : "sans")
 
         // Clear existing font classes first
-        t.className = t.className.replace(/font-\w+/g, "").trim()
-        t.classList.add(`font-${fontToUse}`)
+        textarea.className = textarea.className.replace(/font-\w+/g, "").trim()
+        textarea.classList.add(`font-${fontToUse}`)
 
         // Update font options first, then set the selected value
         updateFontOptions()
 
         // Now set the font dropdown value directly
-        const fontSelect = document.getElementById("font")
         if (fontSelect) {
           setTimeout(() => {
             fontSelect.value = fontToUse
@@ -605,14 +513,245 @@
 
         if (settings.fontSize) {
           const fontSize = settings.fontSize
-          document.getElementById("fontSize").value = fontSize
-          document.getElementById("fontSizeValue").textContent = `${fontSize}px`
-          t.style.fontSize = `${fontSize}px`
+          fontSizeInput.value = fontSize
+          fontSizeValue.textContent = `${fontSize}px`
+          textarea.style.fontSize = `${fontSize}px`
+          document.documentElement.style.setProperty("--font-size", `${fontSize}px`)
         }
 
         // Make sure code mode class is applied if needed
-        if (mode === "code") t.classList.add("codemode")
+        if (mode === "code") textarea.classList.add("codemode")
       }
+
+      // Mode switching
+      function setMode(newMode) {
+        const previousMode = mode
+        mode = newMode
+
+        // Save current font before switching modes
+        if (previousMode !== mode) {
+          const currentFont = getCurrentFont()
+          saveModeFont(previousMode, currentFont)
+        }
+
+        if (mode === "code") {
+          textarea.classList.add("codemode")
+          // If current font is not a monospace font, set it to the saved monospace font or default
+          if (!isMonospaceFont(getCurrentFont())) {
+            const savedCodeFont = getModeFont("code")
+            updateSetting("font", savedCodeFont || "mono", false)
+          }
+        } else {
+          textarea.classList.remove("codemode")
+        }
+
+        // Update the select element
+        modeSelect.value = mode
+
+        // Update font options based on mode
+        updateFontOptions()
+
+        // Restore the font for this mode
+        const savedFont = getModeFont(mode)
+        if (savedFont) {
+          updateSetting("font", savedFont, false) // Don't save to general settings
+
+          // Make sure the font dropdown reflects the current font
+          if (fontSelect) fontSelect.value = savedFont
+        }
+
+        // Save the mode
+        localStorage.setItem("mode", mode)
+      }
+
+      // Tab and indentation handling
+      function setupTabHandler() {
+        textarea.addEventListener("keydown", (e) => {
+          if (mode !== "code") return
+
+          // Handle Enter key - preserve indentation
+          if (e.key === "Enter") {
+            if (textarea.selectionStart === textarea.selectionEnd) {
+              const sel = textarea.selectionStart
+              const text = textarea.value
+
+              // Find start of the current line
+              let lineStart = sel
+              while (lineStart > 0 && text[lineStart - 1] !== "\n") lineStart--
+
+              // Find indentation level
+              let indentation = ""
+              let i = lineStart
+              while (text[i] === " " || text[i] === "\t") {
+                indentation += text[i]
+                i++
+              }
+
+              if (indentation.length > 0) {
+                e.preventDefault()
+
+                // Insert newline with same indentation
+                const insertText = "\n" + indentation
+
+                // Use modern insertion API if available
+                if (typeof textarea.setRangeText === "function") {
+                  textarea.setRangeText(insertText, sel, sel)
+                  textarea.selectionStart = textarea.selectionEnd = sel + insertText.length
+                } else {
+                  // Fallback to execCommand for older browsers
+                  document.execCommand("insertText", false, insertText)
+                }
+              }
+            }
+          }
+
+          // Handle Tab key
+          else if (e.key === "Tab") {
+            e.preventDefault()
+
+            // No selection - simple tab insertion or removal
+            if (textarea.selectionStart === textarea.selectionEnd) {
+              const pos = textarea.selectionStart
+
+              if (!e.shiftKey) {
+                // Insert tab
+                if (typeof textarea.setRangeText === "function") {
+                  textarea.setRangeText("\t", pos, pos)
+                  textarea.selectionStart = textarea.selectionEnd = pos + 1
+                } else {
+                  document.execCommand("insertText", false, "\t")
+                }
+              } else if (pos > 0 && textarea.value[pos - 1] === "\t") {
+                // Remove tab with shift+tab
+                if (typeof textarea.setRangeText === "function") {
+                  textarea.setRangeText("", pos - 1, pos)
+                  textarea.selectionStart = textarea.selectionEnd = pos - 1
+                } else {
+                  textarea.selectionStart = pos - 1
+                  textarea.selectionEnd = pos
+                  document.execCommand("delete")
+                }
+              }
+            }
+            // Selection - indent or unindent multiple lines
+            else {
+              const selStart = textarea.selectionStart
+              const selEnd = textarea.selectionEnd
+              const text = textarea.value
+
+              // Find start of the first line
+              let start = selStart
+              while (start > 0 && text[start - 1] !== "\n") start--
+
+              // Find end of the last line
+              let end = selEnd
+              while (end < text.length && text[end] !== "\n") end++
+
+              // Get the selected text
+              const selectedText = text.substring(start, end)
+              const lines = selectedText.split("\n")
+
+              // Process each line
+              const processedLines = lines.map((line) => {
+                if (line.length === 0) return line
+
+                if (e.shiftKey) {
+                  // Unindent - remove tab or spaces
+                  if (line.startsWith("\t")) {
+                    return line.substring(1)
+                  } else if (line.startsWith("    ")) {
+                    return line.substring(4)
+                  }
+                  return line
+                } else {
+                  // Indent - add tab
+                  return "\t" + line
+                }
+              })
+
+              // Join the lines back
+              const newText = processedLines.join("\n")
+
+              // Replace the text
+              if (typeof textarea.setRangeText === "function") {
+                textarea.setRangeText(newText, start, end)
+                textarea.selectionStart = start
+                textarea.selectionEnd = start + newText.length
+              } else {
+                // Fallback
+                textarea.value = text.substring(0, start) + newText + text.substring(end)
+                textarea.selectionStart = start
+                textarea.selectionEnd = start + newText.length
+              }
+
+              // Save the changes
+              localStorage.setItem("text", textarea.value)
+            }
+          }
+        })
+      }
+
+      // Set up event listeners
+      function setupEventListeners() {
+        // Text input
+        textarea.addEventListener("input", () => {
+          localStorage.setItem("text", textarea.value)
+          updateStats()
+        })
+
+        // Settings changes
+        themeSelect.addEventListener("change", () => {
+          updateSetting("theme", themeSelect.value)
+        })
+
+        fontSelect.addEventListener("change", () => {
+          updateSetting("font", fontSelect.value)
+        })
+
+        fontSizeInput.addEventListener("input", () => {
+          updateFontSizePreview(fontSizeInput.value)
+        })
+
+        fontSizeInput.addEventListener("change", () => {
+          updateSetting("fontSize", fontSizeInput.value)
+        })
+
+        modeSelect.addEventListener("change", () => {
+          setMode(modeSelect.value)
+        })
+
+        // Tab key handling for code mode
+        setupTabHandler()
+      }
+
+      // Initialize the app
+      function init() {
+        // Set up event listeners
+        setupEventListeners()
+
+        // Load saved mode
+        mode = localStorage.getItem("mode") || "writing"
+        setMode(mode)
+
+        // Load saved text
+        textarea.value = localStorage.getItem("text") || DEFAULT_TEXT
+
+        // Load settings
+        loadSettings()
+
+        // Update font options based on mode
+        updateFontOptions()
+
+        // Start stats update
+        setInterval(updateStats, 1000)
+
+        // Focus the textarea
+        textarea.select()
+        textarea.focus()
+      }
+
+      // Initialize when DOM is ready
+      document.addEventListener("DOMContentLoaded", init)
     </script>
   </body>
 </html>
