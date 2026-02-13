@@ -51,12 +51,13 @@
       }
 
       [data-theme="dusk"] {
-        --bg-color: #2d1b2e;
-        --textarea-bg: #3a2042;
-        --text-color: #e6ddf9;
-        --settings-bg: #582b5e;
-        --border-color: #582b5e;
-        --accent-color: #f9c846;
+        --bg-color: #272822;
+        --textarea-bg: #2d2e27;
+        --text-color: #f8f8f2;
+        --settings-bg: #3e3d32;
+        --border-color: #49483e;
+        --accent-color: #fd971f;
+        --secondary-accent: #a6e22e;
       }
 
       html,
@@ -73,29 +74,38 @@
       }
 
       [data-theme="dusk"] body {
-        background: linear-gradient(135deg, #2d1b2e 0%, #582b5e 100%);
+        background: linear-gradient(135deg, #272822 0%, #3e3d32 100%);
       }
 
       [data-theme="dusk"] #t {
-        background: linear-gradient(to bottom, #3a2042 0%, #2d1b2e 100%);
-        border: 1px solid #582b5e;
+        background: linear-gradient(to bottom, #2d2e27 0%, #272822 100%);
+        border: 1px solid #49483e;
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
       }
 
       [data-theme="dusk"] .settings-group select,
       [data-theme="dusk"] .settings-group input {
-        background: rgba(58, 32, 66, 0.8);
-        border: 1px solid #582b5e;
+        background: rgba(45, 46, 39, 0.8);
+        border: 1px solid #49483e;
+        color: #f8f8f2;
       }
 
       [data-theme="dusk"] #byline a,
       [data-theme="dusk"] #byline a:visited {
-        color: var(--accent-color, #f9c846);
-        border-bottom: 1px dotted var(--accent-color, #f9c846);
+        color: var(--accent-color, #fd971f);
+        border-bottom: 1px dotted var(--accent-color, #fd971f);
       }
 
       [data-theme="dusk"] #byline a:hover {
-        border-bottom: 1px solid var(--accent-color, #f9c846);
+        border-bottom: 1px solid var(--accent-color, #fd971f);
+      }
+
+      [data-theme="dusk"] input[type="range"] {
+        accent-color: var(--accent-color, #fd971f);
+      }
+
+      [data-theme="dusk"] #stats {
+        color: var(--secondary-accent, #a6e22e);
       }
 
       main {
@@ -129,10 +139,6 @@
 
       #t:focus {
         box-shadow: 0 0 0 2px rgba(128, 128, 128, 0.2);
-      }
-
-      #t.codemode {
-        font-family: monospace;
       }
 
       #t.font-mono {
@@ -307,16 +313,23 @@
           <!-- Font options will be populated dynamically based on mode -->
         </select>
 
-        <input type="range" id="fontSize" min="12" max="24" value="18" aria-label="Font size" />
+        <input type="range" id="fontSize" min="12" max="36" value="18" aria-label="Font size" />
         <span id="fontSizeValue">18px</span>
 
         <select id="modeSelect" aria-label="Mode selection">
           <option value="writing">Writing</option>
           <option value="code">Code</option>
         </select>
+
+        <button id="exportBtn" aria-label="Download as text file" title="Download as .txt" style="padding:4px 6px;background:var(--textarea-bg);color:var(--text-color);border:1px solid var(--text-color);border-radius:4px;cursor:pointer;display:inline-flex;align-items:center;">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v8M8 10l-3-3M8 10l3-3"/><path d="M3 12h10"/></svg>
+        </button>
+        <button id="copyBtn" aria-label="Copy to clipboard" title="Copy to clipboard" style="padding:4px 6px;background:var(--textarea-bg);color:var(--text-color);border:1px solid var(--text-color);border-radius:4px;cursor:pointer;display:inline-flex;align-items:center;">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="5" width="8" height="8" rx="1"/><path d="M3 11V3a1 1 0 0 1 1-1h8"/></svg>
+        </button>
       </div>
 
-      <div id="stats">0 lines, 0 words, 0 characters, 0 elapsed seconds</div>
+      <div id="stats" aria-live="polite">0 lines, 0 words, 0 characters, 0 elapsed seconds</div>
 
       <div>
         by
@@ -346,7 +359,18 @@
 
       // App state
       let mode = "writing"
-      const startTime = new Date().getTime()
+      const startTime = parseInt(localStorage.getItem("startTime")) || new Date().getTime()
+      localStorage.setItem("startTime", startTime)
+
+      // Helpers
+      function getJSON(key, fallback = {}) {
+        return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback))
+      }
+
+      function defaultTheme() {
+        if (window.matchMedia("(prefers-color-scheme: light)").matches) return "light"
+        return "dark"
+      }
 
       // Font management functions
       function getCurrentFont() {
@@ -359,14 +383,13 @@
       }
 
       function saveModeFont(mode, font) {
-        const modeFonts = JSON.parse(localStorage.getItem("modeFonts") || "{}")
+        const modeFonts = getJSON("modeFonts")
         modeFonts[mode] = font
         localStorage.setItem("modeFonts", JSON.stringify(modeFonts))
       }
 
       function getModeFont(mode) {
-        const modeFonts = JSON.parse(localStorage.getItem("modeFonts") || "{}")
-        return modeFonts[mode]
+        return getJSON("modeFonts")[mode]
       }
 
       function updateFontSizePreview(value) {
@@ -380,13 +403,16 @@
         const words = textarea.value.split(/\s+/).filter((word) => word.length > 0).length
         const chars = textarea.value.length
         const seconds = Math.floor((new Date().getTime() - startTime) / 1000)
-        const timeDisplay = seconds < 59 ? `${seconds} elapsed seconds` : `${Math.floor(seconds / 60)} elapsed minutes`
+        const timeDisplay =
+          seconds < 60 ? `${seconds} elapsed seconds` :
+          seconds < 3600 ? `${Math.floor(seconds / 60)} elapsed minutes` :
+          `${Math.floor(seconds / 3600)}h ${Math.floor((seconds % 3600) / 60)}m elapsed`
 
         stats.textContent = `${lines} lines, ${words} words, ${chars} characters, ${timeDisplay}`
       }
 
       function addFontOption(value, text, isDisabled) {
-        const isSelected = getCurrentFont() == value
+        const isSelected = getCurrentFont() === value
         const option = document.createElement("option")
         option.value = value
         option.text = text
@@ -442,23 +468,18 @@
         textarea.classList.add(`font-${font}`)
       }
 
-      function applyMode(mode) {
-        textarea.classList.toggle("codemode", mode === "code")
-      }
-
       // Settings management
       function applySettings(settings = {}) {
         const font = fontToUse(settings)
-        if (settings.theme) applyTheme(settings.theme)
+        applyTheme(settings.theme || defaultTheme())
         if (settings.fontSize) applyFontSize(settings.fontSize)
         applyFont(font)
-        applyMode(mode)
         updateFontOptions()
         if (fontSelect && font) fontSelect.value = font
       }
 
       function updateSetting(setting, value) {
-        const settings = JSON.parse(localStorage.getItem("settings") || "{}")
+        const settings = getJSON("settings")
         settings[setting] = value
         localStorage.setItem("settings", JSON.stringify(settings))
         if (setting === "font") saveModeFont(mode, value)
@@ -466,8 +487,7 @@
       }
 
       function loadSettings() {
-        const settings = JSON.parse(localStorage.getItem("settings") || "{}")
-        applySettings(settings)
+        applySettings(getJSON("settings"))
       }
 
       function setMode(newMode) {
@@ -511,8 +531,8 @@
           if (typeof textarea.setRangeText === "function") {
             textarea.setRangeText(insertText, sel, sel)
             textarea.selectionStart = textarea.selectionEnd = sel + insertText.length
+            saveText()
           } else {
-            // Fallback to execCommand for older browsers
             document.execCommand("insertText", false, insertText)
           }
         }
@@ -530,6 +550,7 @@
             if (typeof textarea.setRangeText === "function") {
               textarea.setRangeText("\t", pos, pos)
               textarea.selectionStart = textarea.selectionEnd = pos + 1
+              saveText()
             } else {
               document.execCommand("insertText", false, "\t")
             }
@@ -538,6 +559,7 @@
             if (typeof textarea.setRangeText === "function") {
               textarea.setRangeText("", pos - 1, pos)
               textarea.selectionStart = textarea.selectionEnd = pos - 1
+              saveText()
             } else {
               textarea.selectionStart = pos - 1
               textarea.selectionEnd = pos
@@ -614,6 +636,25 @@
         updateStats()
       }
 
+      function exportText() {
+        const blob = new Blob([textarea.value], { type: "text/plain" })
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement("a")
+        a.href = url
+        a.download = "textbox-export.txt"
+        a.click()
+        URL.revokeObjectURL(url)
+      }
+
+      function copyText() {
+        navigator.clipboard.writeText(textarea.value).then(() => {
+          const btn = document.getElementById("copyBtn")
+          const original = btn.innerHTML
+          btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8l3 3 5-6"/></svg>'
+          setTimeout(() => { btn.innerHTML = original }, 1500)
+        })
+      }
+
       function setupEventListeners() {
         textarea.addEventListener("input", saveText)
         themeSelect.addEventListener("change", () => updateSetting("theme", themeSelect.value))
@@ -621,6 +662,8 @@
         fontSizeInput.addEventListener("input", () => updateFontSizePreview(fontSizeInput.value))
         fontSizeInput.addEventListener("change", () => updateSetting("fontSize", fontSizeInput.value))
         modeSelect.addEventListener("change", () => setMode(modeSelect.value))
+        document.getElementById("exportBtn").addEventListener("click", exportText)
+        document.getElementById("copyBtn").addEventListener("click", copyText)
         setupTabHandler()
       }
 
