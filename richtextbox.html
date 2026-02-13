@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<!--
+  Rich Textbox - a simple rich text editor by Jamon Holmgren.
+  One file, no dependencies, readable source code.
+-->
+<html lang="en">
+  <head>
+    <title>Rich Textbox - Simple rich text editor</title>
+    <meta name="description" content="Simple rich text editor with keyboard shortcuts. No accounts, no tracking, just a rich text box." />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="UTF-8" />
+    <style>
+      :root {
+        --bg-color: #252526;
+        --editor-bg: #212121;
+        --text-color: #b9b9b9;
+        --border-color: #000000;
+        --toolbar-bg: #333333;
+        --code-bg: #1a1a1a;
+        --link-color: #6cb6ff;
+        --font-size: 18px;
+        --transition-speed: 0.3s;
+      }
+
+      [data-theme="light"] {
+        --bg-color: #ffffff;
+        --editor-bg: #f5f5f5;
+        --text-color: #333333;
+        --border-color: #cccccc;
+        --toolbar-bg: #e8e8e8;
+        --code-bg: #e0e0e0;
+        --link-color: #0066cc;
+      }
+
+      [data-theme="sepia"] {
+        --bg-color: #f4ecd8;
+        --editor-bg: #fbf7ef;
+        --text-color: #5f4b32;
+        --border-color: #d3c6a6;
+        --toolbar-bg: #ede6d4;
+        --code-bg: #e8dfc8;
+        --link-color: #8b5e3c;
+      }
+
+      [data-theme="dusk"] {
+        --bg-color: #272822;
+        --editor-bg: #2d2e27;
+        --text-color: #f8f8f2;
+        --border-color: #49483e;
+        --toolbar-bg: #3e3d32;
+        --code-bg: #1e1f1a;
+        --link-color: #fd971f;
+      }
+
+      html,
+      body {
+        background: var(--bg-color);
+        height: 100%;
+        padding: 0;
+        margin: 0;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        transition: background var(--transition-speed) ease;
+        display: flex;
+        flex-direction: column;
+        color: var(--text-color);
+      }
+
+      main {
+        width: 100%;
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        padding: 10px 0 0;
+        box-sizing: border-box;
+      }
+
+      .editor-wrap {
+        width: 92%;
+        flex: 1;
+        min-height: 0;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        overflow: hidden;
+        transition: border-color var(--transition-speed) ease;
+      }
+
+      .editor-wrap:focus-within {
+        box-shadow: 0 0 0 2px rgba(128, 128, 128, 0.2);
+      }
+
+      /* Toolbar */
+      #toolbar {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        padding: 4px 8px;
+        background: var(--toolbar-bg);
+        border-bottom: 1px solid var(--border-color);
+        flex-shrink: 0;
+        transition: background var(--transition-speed) ease;
+      }
+
+      #toolbar button {
+        background: transparent;
+        border: 1px solid transparent;
+        color: var(--text-color);
+        padding: 4px 8px;
+        border-radius: 3px;
+        cursor: pointer;
+        font-size: 13px;
+        font-family: inherit;
+        line-height: 1;
+        min-width: 28px;
+        text-align: center;
+        transition: background 0.15s ease, border-color 0.15s ease;
+      }
+
+      #toolbar button:hover {
+        background: var(--editor-bg);
+        border-color: var(--border-color);
+      }
+
+      #toolbar button.active {
+        background: var(--editor-bg);
+        border-color: var(--border-color);
+      }
+
+      .tb-sep {
+        width: 1px;
+        height: 18px;
+        background: var(--border-color);
+        margin: 0 4px;
+        flex-shrink: 0;
+      }
+
+      /* Editor */
+      #editor {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        padding: 3%;
+        background: var(--editor-bg);
+        color: var(--text-color);
+        font-size: var(--font-size);
+        font-family: Georgia, "Times New Roman", serif;
+        outline: none;
+        line-height: 1.7;
+        transition: color var(--transition-speed) ease, background-color var(--transition-speed) ease;
+      }
+
+      /* Rich text styles inside editor */
+      #editor p { margin: 0.3em 0; }
+      #editor a { color: var(--link-color); text-decoration: underline; cursor: text; }
+      #editor ul, #editor ol { margin: 0.4em 0; padding-left: 1.5em; }
+      #editor li { margin: 0.15em 0; }
+      #editor pre {
+        background: var(--code-bg);
+        padding: 12px 16px;
+        border-radius: 4px;
+        overflow-x: auto;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 0.88em;
+        line-height: 1.5;
+        margin: 0.6em 0;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+      }
+      #editor code {
+        background: var(--code-bg);
+        padding: 2px 5px;
+        border-radius: 3px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 0.88em;
+      }
+      #editor pre code { background: none; padding: 0; }
+      #editor blockquote {
+        border-left: 3px solid var(--border-color);
+        padding-left: 1em;
+        margin: 0.5em 0;
+        opacity: 0.85;
+      }
+      #editor h1 { font-size: 1.6em; margin: 0.5em 0 0.2em; }
+      #editor h2 { font-size: 1.3em; margin: 0.5em 0 0.2em; }
+      #editor h3 { font-size: 1.1em; margin: 0.5em 0 0.2em; }
+
+      /* Footer */
+      #byline {
+        width: 100%;
+        text-align: center;
+        font-size: 13px;
+        color: var(--text-color);
+        padding: 8px 5%;
+        line-height: 1.5;
+        box-sizing: border-box;
+        flex-shrink: 0;
+      }
+
+      #byline a,
+      #byline a:visited {
+        color: var(--text-color);
+        text-decoration: none;
+        border-bottom: 1px dotted var(--text-color);
+        transition: border-bottom var(--transition-speed) ease;
+      }
+
+      #byline a:hover { border-bottom: 1px solid var(--text-color); }
+
+      .settings-container {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+        margin: 6px auto;
+        max-width: 800px;
+      }
+
+      .settings-container select,
+      .settings-container button {
+        padding: 4px 8px;
+        background: var(--editor-bg);
+        color: var(--text-color);
+        border: 1px solid var(--text-color);
+        border-radius: 4px;
+        font-size: 14px;
+        cursor: pointer;
+        transition: border-color var(--transition-speed) ease;
+      }
+
+      .settings-container button {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+      }
+
+      .settings-container input[type="range"] {
+        width: 80px;
+        accent-color: var(--text-color);
+      }
+
+      #stats { margin: 4px 0; }
+
+      .divider { display: inline-block; margin: 0 5px; }
+
+      @media (max-width: 768px) {
+        .settings-container { gap: 5px; margin: 5px auto; }
+        #byline { font-size: 11px; }
+        .divider { display: none; }
+      }
+
+      .offscreen {
+        clip-path: inset(100%);
+        clip: rect(1px 1px 1px 1px);
+        height: 1px;
+        overflow: hidden;
+        position: absolute;
+        white-space: nowrap;
+        width: 1px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <label for="editor" class="offscreen">Rich text editor</label>
+      <div class="editor-wrap">
+        <div id="toolbar">
+          <button id="btnBold" title="Bold (⌘B)"><strong>B</strong></button>
+          <button id="btnItalic" title="Italic (⌘I)"><em>I</em></button>
+          <button id="btnLink" title="Link (⌘K)">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 9.5a3.5 3.5 0 0 0 5 0l2-2a3.5 3.5 0 0 0-5-5l-1 1"/><path d="M9.5 6.5a3.5 3.5 0 0 0-5 0l-2 2a3.5 3.5 0 0 0 5 5l1-1"/></svg>
+          </button>
+          <div class="tb-sep"></div>
+          <button id="btnOL" title="Numbered list (⌘⇧7)">1.</button>
+          <button id="btnUL" title="Bullet list (⌘⇧8)">&bull;</button>
+          <div class="tb-sep"></div>
+          <button id="btnCode" title="Code block (```)">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4L1 8l4 4"/><path d="M11 4l4 4-4 4"/></svg>
+          </button>
+        </div>
+        <div id="editor" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Rich text editor"></div>
+      </div>
+    </main>
+
+    <div id="byline">
+      <div class="settings-container">
+        <select id="theme" aria-label="Theme">
+          <option value="dark">Dark</option>
+          <option value="dusk">Dusk</option>
+          <option value="light">Light</option>
+          <option value="sepia">Sepia</option>
+        </select>
+
+        <input type="range" id="fontSize" min="14" max="32" value="18" aria-label="Font size" />
+        <span id="fontSizeValue">18px</span>
+
+        <button id="copyMd" title="Copy as Markdown">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="5" width="8" height="8" rx="1"/><path d="M3 11V3a1 1 0 0 1 1-1h8"/></svg>
+          MD
+        </button>
+        <button id="copyHtml" title="Copy as HTML">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="5" width="8" height="8" rx="1"/><path d="M3 11V3a1 1 0 0 1 1-1h8"/></svg>
+          HTML
+        </button>
+      </div>
+
+      <div id="stats" aria-live="polite">0 words, 0 characters</div>
+
+      <div>
+        by <a href="https://jamon.dev" target="_blank" rel="noopener">Jamon Holmgren</a>
+        <span class="divider">&bull;</span>
+        <a href="https://github.com/jamonholmgren/textbox.jamon.dev" target="_blank" rel="noopener">GitHub Source</a>
+        <span class="divider">&bull;</span>
+        <a href="./index.html">Textbox</a>
+        <span class="divider">&bull;</span>
+        <a href="https://js.jamon.dev" target="_blank" rel="noopener">Simple JS Playground</a>
+      </div>
+    </div>
+
+    <script>
+      // DOM elements
+      const editor = document.getElementById("editor")
+      const statsEl = document.getElementById("stats")
+      const themeSelect = document.getElementById("theme")
+      const fontSizeInput = document.getElementById("fontSize")
+      const fontSizeValueEl = document.getElementById("fontSizeValue")
+
+      // Timer
+      const startTime = parseInt(localStorage.getItem("richStartTime")) || Date.now()
+      localStorage.setItem("richStartTime", startTime)
+
+      const DEFAULT_CONTENT = '<p>Welcome to the <strong>Rich Textbox</strong>! A simple rich text editor with no dependencies.</p><p>Try these shortcuts:</p><ul><li><strong>⌘B</strong> for <strong>bold</strong></li><li><strong>⌘I</strong> for <em>italic</em></li><li><strong>⌘K</strong> to add a <a href="https://jamon.dev">link</a></li><li><strong>⌘⇧7</strong> for numbered lists</li><li><strong>⌘⇧8</strong> for bullet lists</li><li>Type <code>```</code> for a code block — press Enter twice to exit</li></ul><p>Your work is saved automatically. Use the copy buttons below to export as Markdown or HTML.</p>'
+
+      // Normalize paragraph handling across browsers
+      document.execCommand("defaultParagraphSeparator", false, "p")
+
+      // --- Helpers ---
+
+      function defaultTheme() {
+        if (window.matchMedia("(prefers-color-scheme: light)").matches) return "light"
+        return "dark"
+      }
+
+      function setCursorAt(node, offset) {
+        const sel = window.getSelection()
+        const range = document.createRange()
+        range.setStart(node, offset)
+        range.collapse(true)
+        sel.removeAllRanges()
+        sel.addRange(range)
+      }
+
+      function getParentBlock(node) {
+        while (node && node !== editor) {
+          if (node.parentNode === editor) return node
+          node = node.parentNode
+        }
+        return null
+      }
+
+      function isInPre() {
+        const sel = window.getSelection()
+        if (!sel.anchorNode) return false
+        let node = sel.anchorNode
+        while (node && node !== editor) {
+          if (node.tagName === "PRE") return true
+          node = node.parentNode
+        }
+        return false
+      }
+
+      function findParentPre(node) {
+        while (node && node !== editor) {
+          if (node.tagName === "PRE") return node
+          node = node.parentNode
+        }
+        return null
+      }
+
+      // --- Theme & font size ---
+
+      function applyTheme(theme) {
+        themeSelect.value = theme
+        document.documentElement.setAttribute("data-theme", theme)
+        localStorage.setItem("richTheme", theme)
+      }
+
+      function applyFontSize(size) {
+        fontSizeInput.value = size
+        fontSizeValueEl.textContent = `${size}px`
+        editor.style.fontSize = `${size}px`
+        localStorage.setItem("richFontSize", size)
+      }
+
+      // --- Save & stats ---
+
+      function save() {
+        localStorage.setItem("richContent", editor.innerHTML)
+        updateStats()
+      }
+
+      function updateStats() {
+        const text = editor.textContent || ""
+        const words = text.split(/\s+/).filter(w => w.length > 0).length
+        const chars = text.length
+        const seconds = Math.floor((Date.now() - startTime) / 1000)
+        const time =
+          seconds < 60 ? `${seconds}s` :
+          seconds < 3600 ? `${Math.floor(seconds / 60)}m` :
+          `${Math.floor(seconds / 3600)}h ${Math.floor((seconds % 3600) / 60)}m`
+        statsEl.textContent = `${words} words, ${chars} characters, ${time} elapsed`
+      }
+
+      // --- Toolbar active state ---
+
+      function updateToolbar() {
+        document.getElementById("btnBold").classList.toggle("active", document.queryCommandState("bold"))
+        document.getElementById("btnItalic").classList.toggle("active", document.queryCommandState("italic"))
+      }
+
+      // --- Link insertion ---
+
+      function insertLink() {
+        const sel = window.getSelection()
+        const hasSelection = sel && !sel.isCollapsed
+        const url = prompt("Enter URL:", "https://")
+        if (!url) return
+
+        if (hasSelection) {
+          document.execCommand("createLink", false, url)
+        } else {
+          const text = prompt("Link text:", "")
+          if (!text) return
+          const a = document.createElement("a")
+          a.href = url
+          a.textContent = text
+          const range = sel.getRangeAt(0)
+          range.deleteContents()
+          range.insertNode(a)
+          range.setStartAfter(a)
+          range.collapse(true)
+          sel.removeAllRanges()
+          sel.addRange(range)
+        }
+        save()
+      }
+
+      // --- Code block ---
+
+      function insertCodeBlock() {
+        const pre = document.createElement("pre")
+        const textNode = document.createTextNode("\n")
+        pre.appendChild(textNode)
+
+        const sel = window.getSelection()
+        if (!sel.rangeCount) {
+          editor.appendChild(pre)
+        } else {
+          const block = getParentBlock(sel.anchorNode)
+          if (block) {
+            editor.insertBefore(pre, block.nextSibling)
+          } else {
+            editor.appendChild(pre)
+          }
+        }
+        setCursorAt(textNode, 0)
+      }
+
+      function checkTripleBacktick() {
+        const sel = window.getSelection()
+        if (!sel.rangeCount || !sel.anchorNode) return
+        const node = sel.anchorNode
+        if (node.nodeType !== Node.TEXT_NODE) return
+
+        const text = node.textContent
+        const offset = sel.anchorOffset
+        if (offset < 3 || text.substring(offset - 3, offset) !== "```") return
+
+        // Remove backticks from text
+        const before = text.substring(0, offset - 3)
+        const after = text.substring(offset)
+        node.textContent = before + after
+
+        // Create pre block
+        const pre = document.createElement("pre")
+        const textNode = document.createTextNode("\n")
+        pre.appendChild(textNode)
+
+        const block = getParentBlock(node)
+        if (block && block.parentNode === editor) {
+          if (!block.textContent.trim()) {
+            editor.insertBefore(pre, block)
+            editor.removeChild(block)
+          } else {
+            editor.insertBefore(pre, block.nextSibling)
+          }
+        } else {
+          editor.appendChild(pre)
+        }
+
+        setCursorAt(textNode, 0)
+      }
+
+      function handleCodeBlockEnter(e) {
+        const sel = window.getSelection()
+        const node = sel.anchorNode
+        if (!node || node.nodeType !== Node.TEXT_NODE) {
+          e.preventDefault()
+          document.execCommand("insertText", false, "\n")
+          return
+        }
+
+        const offset = sel.anchorOffset
+        const text = node.textContent
+
+        // Double-enter: previous character is a newline → exit code block
+        if (offset > 0 && text[offset - 1] === "\n") {
+          e.preventDefault()
+          const pre = findParentPre(node)
+          if (!pre) return
+
+          // Remove the trailing newline
+          node.textContent = text.substring(0, offset - 1) + text.substring(offset)
+
+          // If code block is now empty, replace it with a paragraph
+          if (!pre.textContent.trim()) {
+            const p = document.createElement("p")
+            p.innerHTML = "<br>"
+            pre.parentNode.insertBefore(p, pre)
+            pre.parentNode.removeChild(pre)
+            setCursorAt(p, 0)
+            return
+          }
+
+          // Create paragraph after code block
+          const p = document.createElement("p")
+          p.innerHTML = "<br>"
+          pre.parentNode.insertBefore(p, pre.nextSibling)
+          setCursorAt(p, 0)
+          return
+        }
+
+        // Single enter: insert a plain newline
+        e.preventDefault()
+        document.execCommand("insertText", false, "\n")
+      }
+
+      // --- Keyboard shortcuts ---
+
+      function handleKeydown(e) {
+        const mod = e.metaKey || e.ctrlKey
+
+        if (mod && !e.shiftKey && e.key === "b") {
+          e.preventDefault()
+          document.execCommand("bold")
+          return
+        }
+        if (mod && !e.shiftKey && e.key === "i") {
+          e.preventDefault()
+          document.execCommand("italic")
+          return
+        }
+        if (mod && !e.shiftKey && e.key === "k") {
+          e.preventDefault()
+          insertLink()
+          return
+        }
+        if (mod && e.shiftKey && (e.code === "Digit7" || e.key === "&")) {
+          e.preventDefault()
+          document.execCommand("insertOrderedList")
+          return
+        }
+        if (mod && e.shiftKey && (e.code === "Digit8" || e.key === "*")) {
+          e.preventDefault()
+          document.execCommand("insertUnorderedList")
+          return
+        }
+
+        // Enter inside a code block
+        if (e.key === "Enter" && isInPre()) {
+          handleCodeBlockEnter(e)
+          return
+        }
+      }
+
+      // --- Markdown export ---
+
+      function toMarkdown(node) {
+        if (!node) return ""
+        if (node.nodeType === Node.TEXT_NODE) return node.textContent
+        if (node.nodeType !== Node.ELEMENT_NODE) return ""
+
+        const tag = node.tagName.toLowerCase()
+        const kids = Array.from(node.childNodes).map(toMarkdown).join("")
+
+        switch (tag) {
+          case "strong": case "b": return `**${kids}**`
+          case "em": case "i": return `*${kids}*`
+          case "a": return `[${kids}](${node.href})`
+          case "p": return `${kids}\n\n`
+          case "div": return `${kids}\n`
+          case "br": return "\n"
+          case "h1": return `# ${kids}\n\n`
+          case "h2": return `## ${kids}\n\n`
+          case "h3": return `### ${kids}\n\n`
+          case "blockquote": return `> ${kids.trim()}\n\n`
+          case "ul": return `${kids}\n`
+          case "ol": return `${kids}\n`
+          case "li": {
+            const parent = node.parentElement?.tagName?.toLowerCase()
+            if (parent === "ol") {
+              const idx = Array.from(node.parentElement.children).indexOf(node) + 1
+              return `${idx}. ${kids.trim()}\n`
+            }
+            return `- ${kids.trim()}\n`
+          }
+          case "pre": return "```\n" + node.textContent.replace(/^\n|\n$/g, "") + "\n```\n\n"
+          case "code": {
+            if (node.parentElement?.tagName?.toLowerCase() === "pre") return kids
+            return `\`${kids}\``
+          }
+          default: return kids
+        }
+      }
+
+      function getMarkdown() {
+        return toMarkdown(editor).replace(/\n{3,}/g, "\n\n").trim()
+      }
+
+      function getCleanHTML() {
+        return editor.innerHTML
+      }
+
+      function flashCopied(btn) {
+        const original = btn.innerHTML
+        btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8l3 3 5-6"/></svg> Copied!'
+        setTimeout(() => { btn.innerHTML = original }, 1500)
+      }
+
+      // --- Event listeners ---
+
+      function setupEvents() {
+        editor.addEventListener("input", () => {
+          checkTripleBacktick()
+          save()
+        })
+        editor.addEventListener("keydown", handleKeydown)
+        document.addEventListener("selectionchange", updateToolbar)
+
+        // Toolbar buttons
+        document.getElementById("btnBold").addEventListener("click", () => { document.execCommand("bold"); editor.focus() })
+        document.getElementById("btnItalic").addEventListener("click", () => { document.execCommand("italic"); editor.focus() })
+        document.getElementById("btnLink").addEventListener("click", () => { insertLink(); editor.focus() })
+        document.getElementById("btnOL").addEventListener("click", () => { document.execCommand("insertOrderedList"); editor.focus() })
+        document.getElementById("btnUL").addEventListener("click", () => { document.execCommand("insertUnorderedList"); editor.focus() })
+        document.getElementById("btnCode").addEventListener("click", () => { insertCodeBlock(); editor.focus() })
+
+        // Settings
+        themeSelect.addEventListener("change", () => applyTheme(themeSelect.value))
+        fontSizeInput.addEventListener("input", () => {
+          fontSizeValueEl.textContent = `${fontSizeInput.value}px`
+          editor.style.fontSize = `${fontSizeInput.value}px`
+        })
+        fontSizeInput.addEventListener("change", () => applyFontSize(fontSizeInput.value))
+
+        // Export buttons
+        document.getElementById("copyMd").addEventListener("click", function () {
+          navigator.clipboard.writeText(getMarkdown()).then(() => flashCopied(this))
+        })
+        document.getElementById("copyHtml").addEventListener("click", function () {
+          navigator.clipboard.writeText(getCleanHTML()).then(() => flashCopied(this))
+        })
+      }
+
+      // --- Init ---
+
+      function init() {
+        setupEvents()
+
+        // Load saved content
+        editor.innerHTML = localStorage.getItem("richContent") || DEFAULT_CONTENT
+
+        // Load settings
+        const savedTheme = localStorage.getItem("richTheme")
+        applyTheme(savedTheme || defaultTheme())
+        applyFontSize(localStorage.getItem("richFontSize") || "18")
+
+        setInterval(updateStats, 1000)
+        updateStats()
+        editor.focus()
+      }
+
+      document.addEventListener("DOMContentLoaded", init)
+    </script>
+  </body>
+</html>
